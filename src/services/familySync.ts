@@ -3,36 +3,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DeviceIdentity, PartnerRelationship, PrayerUpdateEvent } from './familyModels.ts';
+import { PartnerRelationship, PartnerStatus } from './familyModels.ts';
+import { getOrCreateCryptoIdentity, DeviceCryptoIdentity } from './cryptoPairing.ts';
 import { loadAllPrayerRecords } from './trackerStorage.ts';
-import { computeStatsForRecords, formatDateKey, DailyPrayerName } from '../utils/trackerLogic.ts';
+import { formatDateKey, DailyPrayerName } from '../utils/trackerLogic.ts';
 
-const DEVICE_IDENTITY_KEY = 'sajda_device_identity_v1';
 const PARTNERS_STORAGE_KEY = 'sajda_partners_v2';
 
-export function getOrCreateDeviceIdentity(defaultName = 'مستخدم سجدة'): DeviceIdentity {
-  try {
-    const raw = localStorage.getItem(DEVICE_IDENTITY_KEY);
-    if (raw) {
-      return JSON.parse(raw);
-    }
-  } catch {
-    // fallback
-  }
-
-  const newIdentity: DeviceIdentity = {
-    deviceId: 'dev_' + Math.random().toString(36).substring(2, 10) + '-' + Date.now().toString(36),
-    deviceName: defaultName,
-    createdAt: Date.now(),
-  };
-
-  try {
-    localStorage.setItem(DEVICE_IDENTITY_KEY, JSON.stringify(newIdentity));
-  } catch (e) {
-    console.error('Failed to save device identity', e);
-  }
-
-  return newIdentity;
+export async function getLocalDeviceIdentity(): Promise<DeviceCryptoIdentity> {
+  const { identity } = await getOrCreateCryptoIdentity();
+  return identity;
 }
 
 export function loadPartners(): PartnerRelationship[] {
@@ -81,7 +61,7 @@ export function removePartner(id: string): PartnerRelationship[] {
 }
 
 /**
- * Compute real prayer statistics from the user's actual tracker data.
+ * Compute real prayer statistics from user's actual tracker data.
  */
 export function getMyRealPrayerStats(): { todayPrayedCount: number; streak: number; prayerStates: Record<string, boolean> } {
   const allRecords = loadAllPrayerRecords();
@@ -101,7 +81,6 @@ export function getMyRealPrayerStats(): { todayPrayedCount: number; streak: numb
     }
   }
 
-  // Calculate streak by counting consecutive days going backwards from today where at least 1 prayer was performed
   let streak = 0;
   let checkDate = new Date();
   while (true) {
@@ -118,7 +97,6 @@ export function getMyRealPrayerStats(): { todayPrayedCount: number; streak: numb
       streak++;
       checkDate.setDate(checkDate.getDate() - 1);
     } else {
-      // If today has no prayers yet, allow streak to continue from yesterday
       if (streak === 0 && dateKey === todayKey) {
         checkDate.setDate(checkDate.getDate() - 1);
         const yesterdayKey = formatDateKey(checkDate);

@@ -3,17 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PrayerUpdateEvent, NotificationEvent, DeviceIdentity } from './familyModels.ts';
-
-/**
- * Transport Abstraction Layer for Cloudflare Workers (stateless authenticated relay)
- * and Firebase Cloud Messaging (FCM).
- * 
- * Note: In production Android builds (Capacitor), this connects securely via HTTPS
- * to Cloudflare Workers endpoints and Firebase Cloud Messaging APIs. In browser preview
- * mode, requests gracefully fall back or simulate relay responses without storing
- * persistent prayer data on servers.
- */
+import { DeviceCryptoIdentity, SignedMessagePayload, createSignedMessage } from './cryptoPairing.ts';
+import { NotificationEvent } from './familyModels.ts';
 
 export interface RelayResponse {
   delivered: boolean;
@@ -23,15 +14,17 @@ export interface RelayResponse {
 
 export class RelayTransport {
   private workerEndpoint: string;
-  private deviceIdentity: DeviceIdentity;
+  private identity: DeviceCryptoIdentity;
+  private privateKey: CryptoKey;
 
-  constructor(workerEndpoint = 'https://sajda-relay.workers.dev', identity: DeviceIdentity) {
-    this.workerEndpoint = workerEndpoint;
-    this.deviceIdentity = identity;
+  constructor(identity: DeviceCryptoIdentity, privateKey: CryptoKey, endpoint?: string) {
+    this.identity = identity;
+    this.privateKey = privateKey;
+    this.workerEndpoint = endpoint || (import.meta as any).env?.VITE_RELAY_ENDPOINT || 'https://sajda-relay.workers.dev';
   }
 
   /**
-   * Register device securely with Cloudflare Workers stateless relay.
+   * Register device public identity with Cloudflare Workers relay.
    */
   async registerDevice(): Promise<boolean> {
     try {
@@ -39,88 +32,108 @@ export class RelayTransport {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          deviceId: this.deviceIdentity.deviceId,
-          deviceName: this.deviceIdentity.deviceName,
-          createdAt: this.deviceIdentity.createdAt,
+          deviceId: this.identity.deviceId,
+          publicKey: this.identity.publicKeyPemOrJwk,
+          createdAt: this.identity.createdAt,
         }),
       });
       return response.ok;
     } catch {
-      // Offline or preview fallback
-      return true;
+      // Offline / network failure
+      return false;
     }
   }
 
   /**
-   * Send encrypted or token-authorized prayer update through Cloudflare Workers relay.
+   * Send signed prayer update through Cloudflare Workers relay.
+   * Never simulates success if network is offline or relay rejects.
    */
-  async sendPrayerUpdate(targetDeviceId: string, update: PrayerUpdateEvent): Promise<RelayResponse> {
+  async sendPrayerUpdate(recipientId: string, prayerPayload: any): Promise<RelayResponse> {
     try {
-      const response = await fetch(`${this.workerEndpoint}/api/relay/prayer-update`, {
+      const signedMessage: SignedMessagePayload = await createSignedMessage(
+        this.privateKey,
+        this.identity.deviceId,
+        recipientId,
+        prayerPayload
+      );
+
+      const response = await fetch(`${this.workerEndpoint}/api/relay/push`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Device-ID': this.deviceIdentity.deviceId,
+          'X-Device-ID': this.identity.deviceId,
         },
-        body: JSON.stringify({
-          targetDeviceId,
-          update,
-        }),
+        body: JSON.stringify(signedMessage),
       });
 
       if (response.ok) {
         const json = await response.json();
         return {
-          delivered: json.delivered ?? true,
-          relayTimestamp: json.timestamp || Date.now(),
+          delivered: json.delivered ?? false,
+          relayTimestamp: json.relayTimestamp || Date.now(),
+          message: json.message,
         };
       }
-      return { delivered: false, relayTimestamp: Date.now(), message: 'Relay rejected request' };
-    } catch {
-      // In offline/preview mode, simulate local relay acceptance for opt-in peers
+
       return {
-        delivered: true,
+        delivered: false,
         relayTimestamp: Date.now(),
-        message: 'Offline/Preview relay simulation',
+        message: `Relay rejected request: HTTP ${response.status}`,
+      };
+    } catch (e: any) {
+      // Return strict failure status — never fake success
+      return {
+        delivered: false,
+        relayTimestamp: Date.now(),
+        message: e?.message || 'Network error or relay unreachable',
       };
     }
   }
 
   /**
-   * Send FCM push notification / reminder via relay.
+   * Send FCM notification / reminder via relay.
    */
-  async sendFcmNotification(targetDeviceId: string, notification: NotificationEvent): Promise<RelayResponse> {
+  async sendFcmNotification(recipientId: string, notification: NotificationEvent): Promise<RelayResponse> {
     try {
+      const signedMessage: SignedMessagePayload = await createSignedMessage(
+        this.privateKey,
+        this.identity.deviceId,
+        recipientId,
+        notification
+      );
+
       const response = await fetch(`${this.workerEndpoint}/api/relay/fcm-push`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Device-ID': this.deviceIdentity.deviceId,
+          'X-Device-ID': this.identity.deviceId,
         },
-        body: JSON.stringify({
-          targetDeviceId,
-          notification,
-        }),
+        body: JSON.stringify(signedMessage),
       });
 
       if (response.ok) {
-        return { delivered: true, relayTimestamp: Date.now() };
+        const json = await response.json();
+        return {
+          delivered: json.delivered ?? false,
+          relayTimestamp: json.relayTimestamp || Date.now(),
+        };
       }
-      return { delivered: false, relayTimestamp: Date.now(), message: 'FCM push relay error' };
-    } catch {
-      return { delivered: true, relayTimestamp: Date.now(), message: 'Simulated FCM push' };
+
+      return { delivered: false, relayTimestamp: Date.now(), message: `FCM push failed: HTTP ${response.status}` };
+    } catch (e: any) {
+      return { delivered: false, relayTimestamp: Date.now(), message: e?.message || 'Network unreachable' };
     }
   }
 
   /**
-   * Fetch pending updates queued on the stateless relay.
+   * Pull pending signed updates from relay.
    */
-  async fetchPendingUpdates(): Promise<PrayerUpdateEvent[]> {
+  async fetchPendingUpdates(): Promise<any[]> {
     try {
       const response = await fetch(`${this.workerEndpoint}/api/relay/pull`, {
         method: 'GET',
         headers: {
-          'X-Device-ID': this.deviceIdentity.deviceId,
+          'X-Device-ID': this.identity.deviceId,
         },
       });
       if (response.ok) {
@@ -128,7 +141,7 @@ export class RelayTransport {
         return json.updates || [];
       }
     } catch {
-      // ignore
+      // Network failure
     }
     return [];
   }
