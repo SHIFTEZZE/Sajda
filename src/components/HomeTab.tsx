@@ -357,7 +357,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
         </div>
 
         {/* تسجيل فوري للصلاة الحالية أو السابقة */}
-        {prayerTimes.currentPrayer !== 'None' && prayerTimes.currentPrayer !== 'Sunrise' && (
+        {prayerTimes.currentPrayer !== 'None' && (
           <div className="flex items-center justify-between text-xs pt-1 border-t border-neutral-100 font-sans">
             <span className="text-neutral-700">
               تسجيل صلاة <strong>{currentPrayerArabic}</strong>:

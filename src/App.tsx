@@ -104,7 +104,6 @@ export default function App() {
   useEffect(() => {
     const nowMs = currentTime.getTime();
     for (const pt of prayerTimes.list) {
-      if (pt.name === 'Sunrise') continue;
       const diffMs = Math.abs(nowMs - pt.time.getTime());
       if (diffMs < 45000 && lastAlertedPrayer !== pt.name) {
         setLastAlertedPrayer(pt.name);

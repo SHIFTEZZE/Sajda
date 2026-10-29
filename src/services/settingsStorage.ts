@@ -39,7 +39,6 @@ export interface AppSettings {
     reminderLeadMinutes: number; // e.g. 10
   };
   quranFontSize: QuranFontSize;
-  // Consistency goal (e.g. "Record 5 of 5 daily")
   consistencyGoalEnabled: boolean;
   consistencyGoalTarget: number; // 5
 }
@@ -48,8 +47,8 @@ const SETTINGS_KEY = 'rawdah_user_settings_v1';
 
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'victorian_green',
-  isDarkMode: false,
-  hasCompletedOnboarding: false,
+  isDarkMode: true, // Default theme is dark as requested
+  hasCompletedOnboarding: true, // Remove first time message / onboarding modal completely
   location: {
     cityName: DEFAULT_CITY.name,
     arabicName: DEFAULT_CITY.arabicName,
@@ -60,12 +59,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
     isGps: false,
   },
   calculation: {
-    method: 'Morocco', // Default per brief: Morocco Ministry of Habous
+    method: 'Morocco',
     asrMethod: 'Standard',
     highLatitudeRule: 'MiddleOfTheNight',
     adjustments: {
       fajr: 0,
-      sunrise: 0,
       dhuhr: 0,
       asr: 0,
       maghrib: 0,

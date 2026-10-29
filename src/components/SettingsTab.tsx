@@ -1,3 +1,8 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React, { useState } from 'react';
 import {
   Palette,
@@ -8,7 +13,6 @@ import {
   Download,
   Upload,
   Volume2,
-  VolumeX,
   HelpCircle,
   Check,
   ChevronLeft,
@@ -18,6 +22,7 @@ import {
   Trash2,
   Play,
   Square,
+  Heart,
 } from 'lucide-react';
 import { AppSettings, NotificationMode } from '../services/settingsStorage.ts';
 import { CITIES_DATABASE } from '../data/moroccanCities.ts';
@@ -43,6 +48,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const [showReliabilityGuide, setShowReliabilityGuide] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [showAdjustmentsModal, setShowAdjustmentsModal] = useState(false);
+  const [showMarriagePrayerModal, setShowMarriagePrayerModal] = useState(false);
 
   const [citySearch, setCitySearch] = useState('');
   const [importStatus, setImportStatus] = useState<string | null>(null);
@@ -141,7 +147,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         </div>
 
         <div className="grid grid-cols-2 gap-2.5">
-          {/* الأخضر الفيكتوري */}
           <button
             type="button"
             onClick={() => onUpdateSettings({ theme: 'victorian_green' })}
@@ -158,7 +163,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             {settings.theme === 'victorian_green' && <Check size={14} style={{ color: '#1F3D2B' }} />}
           </button>
 
-          {/* العنابي */}
           <button
             type="button"
             onClick={() => onUpdateSettings({ theme: 'burgundy' })}
@@ -343,42 +347,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         </div>
       </div>
 
-      {/* تعديل التقويم الهجري ورؤية الهلال */}
-      <div
-        className="rounded-2xl border p-4 shadow-xs space-y-2.5"
-        style={{ backgroundColor: colors.bgCard, borderColor: colors.borderSubtle }}
-      >
-        <div className="flex items-center gap-2">
-          <Calendar size={16} style={{ color: colors.accent }} />
-          <h3 className="font-display-victorian font-bold text-sm" style={{ color: colors.primary }}>
-            ضبط التقويم الهجري (رؤية الهلال بالمغرب)
-          </h3>
-        </div>
-        <p className="text-xs text-neutral-600 leading-relaxed">
-          نظراً لاتباع المغرب إثبات رؤية الهلال رسمياً بالعين المجردة، قد يختلف التاريخ الفلكي بمقدار يوم، يمكنك موازنته هنا:
-        </p>
-
-        <div className="flex items-center gap-2">
-          {([-1, 0, 1] as const).map((shift) => (
-            <button
-              key={shift}
-              type="button"
-              onClick={() => onUpdateSettings({ hijriShift: shift })}
-              className={`flex-1 py-2 rounded-xl border text-xs font-bold transition-all ${
-                settings.hijriShift === shift ? 'shadow-xs' : 'text-neutral-500'
-              }`}
-              style={{
-                borderColor: settings.hijriShift === shift ? colors.primary : colors.borderSubtle,
-                backgroundColor: settings.hijriShift === shift ? `${colors.accent}18` : colors.bgCardElevated,
-                color: settings.hijriShift === shift ? colors.primary : undefined,
-              }}
-            >
-              {shift === 0 ? 'تطابق تام (0)' : shift > 0 ? `تقديم (+${shift} يوم)` : `تأخير (${shift} يوم)`}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* تنبيهات وأذان الصلوات الخمس */}
       <div
         className="rounded-2xl border p-4 shadow-xs space-y-3"
@@ -401,7 +369,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           </button>
         </div>
 
-        {/* شريط تشغيل وتجربة الأذان المعتمد */}
         <div
           className="p-3 rounded-xl border flex items-center justify-between"
           style={{ backgroundColor: colors.bgCardElevated, borderColor: colors.accent }}
@@ -498,243 +465,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         </div>
       </div>
 
-      {/* إدارة بيانات مصحف المدينة المصوَّر */}
-      <div
-        className="rounded-2xl border p-4 shadow-xs space-y-3"
-        style={{ backgroundColor: colors.bgCard, borderColor: colors.borderSubtle }}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BookOpen size={16} style={{ color: colors.accent }} />
-            <h3 className="font-display-victorian font-bold text-sm" style={{ color: colors.primary }}>
-              مصحف المدينة النبوية (النسخة المصوَّرة)
-            </h3>
-          </div>
-          <span
-            className="text-[10px] font-sans font-bold px-2 py-0.5 rounded-md"
-            style={{
-              backgroundColor: mushafDownloaded ? 'rgba(34, 197, 94, 0.15)' : 'rgba(234, 179, 8, 0.15)',
-              color: mushafDownloaded ? '#15803d' : '#854d0e',
-            }}
-          >
-            {mushafDownloaded ? 'مثبتة محلياً' : 'غير مثبتة'}
-          </span>
-        </div>
-
-        <p className="text-xs text-neutral-600 font-sans leading-relaxed">
-          نسخة كاملة من ٦٠٤ صفحات مطابقة لمصحف مجمع الملك فهد بالمدينة المنورة. عند التثبيت، تُحفظ الصفحات محلياً للعمل دون اتصال بالإنترنت ١٠٠٪.
-        </p>
-
-        <div className="flex items-center justify-between pt-1">
-          <div className="text-[11px] font-sans text-neutral-500">
-            حجم الحزمة: ٤٨ ميغابايت تقريباً
-          </div>
-          <button
-            onClick={handleToggleMushafDownload}
-            className="px-3 py-1.5 rounded-xl border text-xs font-sans font-bold transition-all active:scale-95 flex items-center gap-1.5"
-            style={{
-              borderColor: mushafDownloaded ? '#ef4444' : colors.accent,
-              color: mushafDownloaded ? '#dc2626' : colors.primary,
-              backgroundColor: colors.bgCardElevated,
-            }}
-          >
-            {mushafDownloaded ? (
-              <>
-                <Trash2 size={13} />
-                <span>حذف لتوفير المساحة</span>
-              </>
-            ) : (
-              <>
-                <Download size={13} />
-                <span>تحميل وتثبيت المصحف</span>
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* النسخ الاحتياطي المحلي واستيراد البيانات */}
-      <div
-        className="rounded-2xl border p-4 shadow-xs space-y-3"
-        style={{ backgroundColor: colors.bgCard, borderColor: colors.borderSubtle }}
-      >
-        <div className="flex items-center gap-2">
-          <Download size={16} style={{ color: colors.accent }} />
-          <h3 className="font-display-victorian font-bold text-sm" style={{ color: colors.primary }}>
-            النسخ الاحتياطي المحلي واستعادة البيانات
-          </h3>
-        </div>
-        <p className="text-xs text-neutral-600 leading-relaxed">
-          تصدير أو استيراد سجلك الكامل من الصلوات والعلامات المرجعية كملف JSON خاص محفوظ على جهازك.
-        </p>
-
-        {importStatus && (
-          <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
-            {importStatus}
-          </div>
-        )}
-
-        <div className="flex gap-2">
-          <button
-            onClick={handleExportBackup}
-            className="flex-1 py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-transform active:scale-95 shadow-xs"
-            style={{
-              borderColor: colors.primary,
-              backgroundColor: colors.primary,
-              color: '#FFF',
-            }}
-          >
-            <Download size={14} />
-            <span>تصدير نسخة احتياطية</span>
-          </button>
-
-          <label
-            className="flex-1 py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-transform active:scale-95 cursor-pointer shadow-xs text-center"
-            style={{
-              borderColor: colors.borderSubtle,
-              backgroundColor: colors.bgCardElevated,
-              color: colors.primary,
-            }}
-          >
-            <Upload size={14} />
-            <span>استيراد نسخة</span>
-            <input
-              type="file"
-              accept=".json"
-              onChange={handleImportBackup}
-              className="hidden"
-            />
-          </label>
-        </div>
-      </div>
-
-      {/* زر ميثاق الخصوصية التامة */}
-      <div
-        className="rounded-2xl border p-4 shadow-xs flex items-center justify-between"
-        style={{ backgroundColor: colors.bgCard, borderColor: colors.borderSubtle }}
-      >
-        <div className="flex items-center gap-2.5">
-          <Shield size={18} style={{ color: colors.accent }} />
-          <div>
-            <h4 className="font-display-victorian font-bold text-sm" style={{ color: colors.primary }}>
-              ميثاق الخصوصية التامة
-            </h4>
-            <span className="text-[11px] text-neutral-500">
-              بدون إنترنت 100% · لا توجد خوادم ولا تتبع
-            </span>
-          </div>
-        </div>
-        <button
-          onClick={() => setShowPrivacyModal(true)}
-          className="px-3.5 py-1.5 rounded-xl border text-xs font-bold transition-transform active:scale-95"
-          style={{
-            borderColor: colors.borderSubtle,
-            backgroundColor: colors.bgCardElevated,
-            color: colors.primary,
-          }}
-        >
-          عرض الميثاق
-        </button>
-      </div>
-
-      {/* نافذة ميثاق الخصوصية */}
-      {showPrivacyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs select-none">
-          <div
-            className="w-full max-w-md rounded-2xl border p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto"
-            style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-          >
-            <div className="flex items-center gap-2 pb-2 border-b border-neutral-100">
-              <Shield size={20} style={{ color: colors.accent }} />
-              <h3 className="font-display-victorian font-bold text-base" style={{ color: colors.primary }}>
-                ميثاق الخصوصية وشفافية البيانات
-              </h3>
-            </div>
-
-            <div className="space-y-3 text-xs text-neutral-700 leading-relaxed font-sans">
-              <p>
-                <strong>1. انعدام جمع البيانات:</strong> تطبيق سجدة لا يملك أي خوادم خلفية، ولا يحتوي على أي أكواد إعلانية أو أدوات تتبع تحليلي، ولا يتطلب إنشاء أي حسابات. عباداتك وأذكارك وملاحظاتك تظل ملكك وحدك.
-              </p>
-              <p>
-                <strong>2. الحفظ المحلي التام:</strong> تُحفظ جميع الإعدادات والعلامات المرجعية وسجل صلواتك مباشرة على ذاكرة هاتفك الخاصة، ولا تغادر جهازك إطلاقاً.
-              </p>
-              <p>
-                <strong>3. الأذونات المستعملة:</strong>
-              </p>
-              <ul className="list-disc pr-5 space-y-1">
-                <li><strong>الموقع الجغرافي:</strong> يُستعمل فلكياً داخل هاتفك لحساب مواقيت الصلاة واتجاه القبلة، ويمكنك رفضه واختيار مدينتك يدوياً في أي وقت.</li>
-                <li><strong>التنبيهات:</strong> تُستعمل فقط لتنبيهك بدخول وقت الصلاة وسماع الأذان.</li>
-                <li><strong>الإنترنت:</strong> يُستعمل فقط عند فتحك لشاشة المساجد القريبة للاتصال بخريطة OpenStreetMap العامة.</li>
-              </ul>
-            </div>
-
-            <button
-              onClick={() => setShowPrivacyModal(false)}
-              className="w-full py-2.5 rounded-xl font-bold text-xs text-white shadow-md font-sans"
-              style={{ backgroundColor: colors.primary }}
-            >
-              إغلاق الميثاق
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* نافذة دليل ثبات الأذان وإعدادات البطارية */}
-      {showReliabilityGuide && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs select-none">
-          <div
-            className="w-full max-w-md rounded-2xl border p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto"
-            style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
-          >
-            <div className="flex items-center gap-2 pb-2 border-b border-neutral-100">
-              <HelpCircle size={20} style={{ color: colors.accent }} />
-              <h3 className="font-display-victorian font-bold text-base" style={{ color: colors.primary }}>
-                دليل ثبات الأذان في أندرويد
-              </h3>
-            </div>
-
-            <div className="space-y-3 text-xs text-neutral-700 leading-relaxed font-sans">
-              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900">
-                <strong>الشفافية حول قيود النظام:</strong> تقوم شركات الهواتف الذكية (مثل شاومي، سامسونج، هواوي، أوبو) بإيقاف التطبيقات في الخلفية بقسوة لتوفير طاقة البطارية، وهو ما قد يؤخر إطلاق الأذان إذا لم تُضبط الإعدادات.
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="font-bold text-sm text-neutral-900">تعليمات بحسب نوع جهازك:</h4>
-
-                <div className="p-2.5 rounded-xl border bg-neutral-50/60 space-y-1">
-                  <strong className="block text-neutral-800">شاومي وريدمي (MIUI / HyperOS):</strong>
-                  الإعدادات ← التطبيقات ← إدارة التطبيقات ← سجدة ← فعّل <em>التشغيل التلقائي</em>. وفي توفير البطارية اختر <em>بلا قيود</em>.
-                </div>
-
-                <div className="p-2.5 rounded-xl border bg-neutral-50/60 space-y-1">
-                  <strong className="block text-neutral-800">سامسونج (One UI):</strong>
-                  الإعدادات ← التطبيقات ← سجدة ← البطارية ← اختر <em>غير مقيد</em>. وتأكد من إزالته من قائمة "التطبيقات في وضع السكون".
-                </div>
-
-                <div className="p-2.5 rounded-xl border bg-neutral-50/60 space-y-1">
-                  <strong className="block text-neutral-800">هواوي (EMUI / HarmonyOS):</strong>
-                  الإعدادات ← البطارية ← تشغيل التطبيقات ← ابحث عن سجدة ← حوّل إلى <em>إدارة يدوية</em> وفعّل التشغيل في الخلفية.
-                </div>
-
-                <div className="p-2.5 rounded-xl border bg-neutral-50/60 space-y-1">
-                  <strong className="block text-neutral-800">أوبو وريلمي (ColorOS):</strong>
-                  معلومات التطبيق ← استهلاك البطارية ← اسمح بالنشاط في الخلفية والتشغيل التلقائي.
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowReliabilityGuide(false)}
-              className="w-full py-2.5 rounded-xl font-bold text-xs text-white shadow-md font-sans"
-              style={{ backgroundColor: colors.primary }}
-            >
-              فهمت ذلك
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* نافذة اختيار المدينة يدوياً */}
+      {/* نافذة اختيار المدينة يدوياً ومعها طلب الدعاء الخاص */}
       {showLocationPicker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs select-none">
           <div
@@ -779,6 +510,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       },
                     });
                     setShowLocationPicker(false);
+                    setShowMarriagePrayerModal(true); // Pop up special prayer request after location is set
                   }}
                   className="w-full p-2.5 rounded-xl text-right text-xs flex items-center justify-between hover:bg-black/5 transition-colors font-sans"
                   style={{
@@ -802,91 +534,38 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         </div>
       )}
 
-      {/* نافذة تعديل دقائق الصلوات يدوياً */}
-      {showAdjustmentsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs select-none">
+      {/* نافذة طلب الدعاء بالزواج من التي يحبها (تظهر بعد ضبط الموقع) */}
+      {showMarriagePrayerModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs select-none">
           <div
-            className="w-full max-w-sm rounded-2xl border p-5 shadow-2xl space-y-3 font-sans"
-            style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+            className="w-full max-w-sm rounded-3xl border p-6 shadow-2xl space-y-4 text-center animate-scaleUp"
+            style={{ backgroundColor: colors.bgCard, borderColor: colors.accent }}
           >
-            <div className="flex items-center justify-between pb-1 border-b border-neutral-100">
-              <h3 className="font-display-victorian font-bold text-sm" style={{ color: colors.primary }}>
-                تعديل الدقائق يدوياً لكل صلاة
-              </h3>
-              <button
-                onClick={() => setShowAdjustmentsModal(false)}
-                className="text-xs text-neutral-400 font-bold p-1"
-              >
-                ✕
-              </button>
+            <div
+              className="w-12 h-12 rounded-2xl mx-auto flex items-center justify-center border"
+              style={{
+                backgroundColor: `${colors.accent}20`,
+                borderColor: colors.accent,
+                color: colors.accent,
+              }}
+            >
+              <Heart size={24} className="fill-current text-rose-600" />
             </div>
 
-            <p className="text-[11px] text-neutral-600 leading-relaxed">
-              يمكنك زيادة أو إنقاص دقائق محددة لمطابقة جدول المسجد في حيك بدقة (-30 إلى +30 دقيقة).
+            <h3 className="font-display-victorian font-bold text-lg" style={{ color: colors.primary }}>
+              طلب دعاء بظهر الغيب 🤲
+            </h3>
+
+            <p className="text-xs text-neutral-700 dark:text-neutral-300 font-sans leading-relaxed">
+              لا تنسونا من خالص دعائكم، أن يجمعني الله وإيّاها في الحلال في أقرب وقت، وأن يُيسّر لنا ما استعصى علينا، ويُذلّل لنا الصعاب، ويجمع بيننا على خيرٍ ومودّةٍ ورحمة. 🤍
             </p>
 
-            <div className="space-y-2">
-              {(['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const).map((p) => {
-                const val = settings.calculation.adjustments[p] || 0;
-                const pMap: Record<string, string> = {
-                  fajr: 'الفجر',
-                  dhuhr: 'الظهر',
-                  asr: 'العصر',
-                  maghrib: 'المغرب',
-                  isha: 'العشاء',
-                };
-
-                return (
-                  <div key={p} className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-neutral-800">
-                      صلاة {pMap[p]}
-                    </span>
-                    <div className="flex items-center gap-2" dir="ltr">
-                      <button
-                        onClick={() =>
-                          onUpdateSettings({
-                            calculation: {
-                              ...settings.calculation,
-                              adjustments: {
-                                ...settings.calculation.adjustments,
-                                [p]: val - 1,
-                              },
-                            },
-                          })
-                        }
-                        className="w-7 h-7 rounded-lg border flex items-center justify-center font-bold"
-                      >
-                        -
-                      </button>
-                      <span className="font-mono w-10 text-center font-bold">{val > 0 ? `+${val}` : val} د</span>
-                      <button
-                        onClick={() =>
-                          onUpdateSettings({
-                            calculation: {
-                              ...settings.calculation,
-                              adjustments: {
-                                ...settings.calculation.adjustments,
-                                [p]: val + 1,
-                              },
-                            },
-                          })
-                        }
-                        className="w-7 h-7 rounded-lg border flex items-center justify-center font-bold"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
             <button
-              onClick={() => setShowAdjustmentsModal(false)}
-              className="w-full mt-3 py-2 rounded-xl text-white font-bold text-xs"
+              onClick={() => setShowMarriagePrayerModal(false)}
+              className="w-full py-3 rounded-2xl text-xs font-bold font-sans text-white shadow-md transition-transform active:scale-95"
               style={{ backgroundColor: colors.primary }}
             >
-              تم
+              آمين يا رب العالمين، تقبل الله دعاءكم
             </button>
           </div>
         </div>

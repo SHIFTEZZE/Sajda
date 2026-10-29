@@ -1,7 +1,6 @@
 /**
- * Prayer Times Calculation Engine
- * Uses astronomical formulas and the Adhan library.
- * Default calculation method: Morocco (Ministry of Habous: Fajr 19°, Isha 17°).
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 import {
@@ -10,13 +9,11 @@ import {
   Coordinates,
   HighLatitudeRule,
   Madhab,
-  Prayer,
   PrayerTimes,
 } from 'adhan';
 
 export interface PrayerAdjustment {
   fajr: number;
-  sunrise: number;
   dhuhr: number;
   asr: number;
   maghrib: number;
@@ -33,7 +30,7 @@ export interface PrayerTimesConfig {
 }
 
 export interface FormattedPrayerTime {
-  name: 'Fajr' | 'Sunrise' | 'Dhuhr' | 'Asr' | 'Maghrib' | 'Isha';
+  name: 'Fajr' | 'Dhuhr' | 'Asr' | 'Maghrib' | 'Isha';
   arabicName: string;
   time: Date;
   formattedTime: string; // e.g. "05:14"
@@ -44,21 +41,20 @@ export interface FormattedPrayerTime {
 export interface DayPrayerTimes {
   date: Date;
   fajr: Date;
-  sunrise: Date;
+  sunrise: Date; // kept for astronomy / sunrise time display if needed, but not as a prayer
   dhuhr: Date;
   asr: Date;
   maghrib: Date;
   isha: Date;
   list: FormattedPrayerTime[];
-  currentPrayer: 'Fajr' | 'Sunrise' | 'Dhuhr' | 'Asr' | 'Maghrib' | 'Isha' | 'None';
-  nextPrayer: 'Fajr' | 'Sunrise' | 'Dhuhr' | 'Asr' | 'Maghrib' | 'Isha';
+  currentPrayer: 'Fajr' | 'Dhuhr' | 'Asr' | 'Maghrib' | 'Isha' | 'None';
+  nextPrayer: 'Fajr' | 'Dhuhr' | 'Asr' | 'Maghrib' | 'Isha';
   nextPrayerTime: Date;
   secondsToNext: number;
 }
 
 export const ARABIC_PRAYER_NAMES: Record<string, string> = {
   Fajr: 'الفجر',
-  Sunrise: 'الشروق',
   Dhuhr: 'الظهر',
   Asr: 'العصر',
   Maghrib: 'المغرب',
@@ -90,13 +86,8 @@ export const HIGH_LATITUDE_AR: Record<PrayerTimesConfig['highLatitudeRule'], str
   TwilightAngle: 'زاوية الشفق',
 };
 
-/**
- * Returns Morocco Ministry of Habous calculation parameters
- * Fajr: 19 degrees, Isha: 17 degrees.
- */
 export function getMoroccoParameters(): CalculationParameters {
   const params = new CalculationParameters('Other', 19, 17);
-  // Habous official timetable uses Maliki / standard Asr shadow ratio
   params.madhab = Madhab.Shafi;
   params.highLatitudeRule = HighLatitudeRule.MiddleOfTheNight;
   return params;
@@ -137,10 +128,8 @@ export function calculatePrayerTimes(
   const coords = new Coordinates(config.latitude, config.longitude);
   const params = getCalculationParameters(config.method);
 
-  // Apply Asr madhab
   params.madhab = config.asrMethod === 'Hanafi' ? Madhab.Hanafi : Madhab.Shafi;
 
-  // Apply High Latitude Rule
   if (config.highLatitudeRule === 'SeventhOfTheNight') {
     params.highLatitudeRule = HighLatitudeRule.SeventhOfTheNight;
   } else if (config.highLatitudeRule === 'TwilightAngle') {
@@ -149,9 +138,7 @@ export function calculatePrayerTimes(
     params.highLatitudeRule = HighLatitudeRule.MiddleOfTheNight;
   }
 
-  // Apply adjustments in minutes
   params.adjustments.fajr = config.adjustments.fajr || 0;
-  params.adjustments.sunrise = config.adjustments.sunrise || 0;
   params.adjustments.dhuhr = config.adjustments.dhuhr || 0;
   params.adjustments.asr = config.adjustments.asr || 0;
   params.adjustments.maghrib = config.adjustments.maghrib || 0;
@@ -159,28 +146,23 @@ export function calculatePrayerTimes(
 
   const pt = new PrayerTimes(coords, date, params);
 
-  // Calculate next day's Fajr in case today's Isha has passed
   const nextDay = new Date(date);
   nextDay.setDate(nextDay.getDate() + 1);
   const nextDayPt = new PrayerTimes(coords, nextDay, params);
 
-  // Determine current and next prayer relative to 'now'
   let currentPrayerName: DayPrayerTimes['currentPrayer'] = 'None';
   let nextPrayerName: DayPrayerTimes['nextPrayer'] = 'Fajr';
   let nextPrayerTime: Date = pt.fajr;
 
   const nowMs = now.getTime();
 
+  // Exclude sunrise from prayer sequence (Sunrise is not a prayer)
   if (nowMs < pt.fajr.getTime()) {
     currentPrayerName = 'None';
     nextPrayerName = 'Fajr';
     nextPrayerTime = pt.fajr;
-  } else if (nowMs < pt.sunrise.getTime()) {
-    currentPrayerName = 'Fajr';
-    nextPrayerName = 'Sunrise';
-    nextPrayerTime = pt.sunrise;
   } else if (nowMs < pt.dhuhr.getTime()) {
-    currentPrayerName = 'Sunrise';
+    currentPrayerName = 'Fajr';
     nextPrayerName = 'Dhuhr';
     nextPrayerTime = pt.dhuhr;
   } else if (nowMs < pt.asr.getTime()) {
@@ -196,7 +178,6 @@ export function calculatePrayerTimes(
     nextPrayerName = 'Isha';
     nextPrayerTime = pt.isha;
   } else {
-    // Past Isha -> Current is Isha, next is tomorrow's Fajr
     currentPrayerName = 'Isha';
     nextPrayerName = 'Fajr';
     nextPrayerTime = nextDayPt.fajr;
@@ -216,14 +197,6 @@ export function calculatePrayerTimes(
       formattedTime: formatTime(pt.fajr),
       isCurrent: currentPrayerName === 'Fajr',
       isNext: nextPrayerName === 'Fajr',
-    },
-    {
-      name: 'Sunrise',
-      arabicName: ARABIC_PRAYER_NAMES.Sunrise,
-      time: pt.sunrise,
-      formattedTime: formatTime(pt.sunrise),
-      isCurrent: currentPrayerName === 'Sunrise',
-      isNext: nextPrayerName === 'Sunrise',
     },
     {
       name: 'Dhuhr',
