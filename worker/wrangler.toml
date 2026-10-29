@@ -1,0 +1,11 @@
+name = "sajda-cloudflare-relay"
+main = "src/index.ts"
+compatibility_date = "2025-02-01"
+
+[vars]
+ENVIRONMENT = "production"
+MAX_PAYLOAD_SIZE = 10240 # 10KB payload limit
+
+# Secrets required (to be set via wrangler secret put):
+# - FIREBASE_SERVICE_ACCOUNT_JSON
+# - FCM_PROJECT_ID
