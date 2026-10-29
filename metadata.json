@@ -1,0 +1,10 @@
+{
+  "name": "سجدة — الرفيق المسلم",
+  "description": "تطبيق سجدة: رفيق المسلم اليومي بمواقيت الصلاة الدقيقة والأذان، بوصلة القبلة، المصحف الشريف المصور، ومحاسبة الصلوات بخصوصية تامة وبدون إنترنت.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

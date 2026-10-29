@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-serif: "Amiri", "Cormorant Garamond", Georgia, serif;
+    --font-display: "Amiri", "Cinzel", "Cormorant Garamond", serif;
+    --font-arabic: "Amiri Quran", "Amiri", serif;
+    --font-sans: "Cairo", "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+    direction: rtl;
+    text-align: right;
+  }
+}
+
+.font-serif-victorian {
+  font-family: "Amiri", "Cormorant Garamond", Georgia, serif;
+}
+
+.font-display-victorian {
+  font-family: "Amiri", "Cinzel", "Cormorant Garamond", serif;
+}
+
+.font-arabic-uthmani {
+  font-family: "Amiri Quran", "Amiri", "Scheherazade New", serif;
+  direction: rtl;
+  line-height: 2.2;
+}
+
+/* Victorian delicate ornamental divider */
+.victorian-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+}
+.victorian-divider::before,
+.victorian-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid currentColor;
+  opacity: 0.35;
+}
+.victorian-divider:not(:empty)::before {
+  margin-left: 0.75em;
+}
+.victorian-divider:not(:empty)::after {
+  margin-right: 0.75em;
+}
+
+/* Subtle corner filigree / borders */
+.victorian-frame {
+  position: relative;
+  border: 1px solid var(--theme-accent-alpha, rgba(176, 141, 87, 0.4));
+}
+.victorian-frame::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid var(--theme-accent-alpha, rgba(176, 141, 87, 0.2));
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(176, 141, 87, 0.35);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(176, 141, 87, 0.6);
+}
