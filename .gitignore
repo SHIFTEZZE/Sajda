@@ -6,3 +6,12 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Cloudflare local development
+worker/.wrangler/
+
+# Cloudflare local development
+worker/.wrangler/
+
+# Local security backup
+worker/src/*.backup
