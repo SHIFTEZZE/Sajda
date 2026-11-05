@@ -158,7 +158,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           >
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded-full bg-[#1F3D2B] border border-[#B08D57]" />
-              <span className="text-xs font-bold text-[#1F3D2B]">الأخضر الفيكتوري</span>
+              <span className="text-xs font-bold text-[#1F3D2B]">الأخضر</span>
             </div>
             {settings.theme === 'victorian_green' && <Check size={14} style={{ color: '#1F3D2B' }} />}
           </button>
@@ -174,7 +174,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           >
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded-full bg-[#6B1E2E] border border-[#C9A24B]" />
-              <span className="text-xs font-bold text-[#6B1E2E]">العَنَّابِي الملكي</span>
+              <span className="text-xs font-bold text-[#6B1E2E]">الأحمر</span>
             </div>
             {settings.theme === 'burgundy' && <Check size={14} style={{ color: '#6B1E2E' }} />}
           </button>

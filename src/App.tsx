@@ -14,12 +14,16 @@ import { QiblaView } from './components/QiblaView.tsx';
 import { MosquesView } from './components/MosquesView.tsx';
 import { HadithView } from './components/HadithView.tsx';
 import { FamilyTab } from './components/FamilyTab.tsx';
-import { OnboardingModal } from './components/OnboardingModal.tsx';
+import { MarriagePrayerModal } from './components/MarriagePrayerModal.tsx';
+import { BatteryOptimizationModal } from './components/BatteryOptimizationModal.tsx';
+import { wakeLockService } from './services/wakeLockService.ts';
 
 import {
   AppSettings,
   loadSettings,
   saveSettings,
+  hasSeenBatteryPrompt,
+  markBatteryPromptSeen,
 } from './services/settingsStorage.ts';
 import {
   RecordsMap,
@@ -33,13 +37,14 @@ import { DailyPrayerName, PrayerState, formatDateKey } from './utils/trackerLogi
 import { audioAdhan } from './services/audioAdhan.ts';
 
 export default function App() {
-  const [settings, setSettings] = useState<AppSettings>(() => {
-    const loaded = loadSettings();
-    if (typeof window !== 'undefined' && window.location.search.includes('autostart=1')) {
-      loaded.hasCompletedOnboarding = true;
-    }
-    return loaded;
-  });
+  const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
+  const [showMarriagePrayerModal, setShowMarriagePrayerModal] = useState<boolean>(true);
+  const [showBatteryModal, setShowBatteryModal] = useState<boolean>(false);
+
+  // Initialize WakeLock and audio session keepalive so Adhan runs reliably
+  useEffect(() => {
+    wakeLockService.requestWakeLock();
+  }, []);
 
   const [activeTab, setActiveTab] = useState<TabId>('home');
   const [records, setRecords] = useState<RecordsMap>(() => loadAllPrayerRecords());
@@ -218,13 +223,25 @@ export default function App() {
           colors={themeColors}
         />
 
-        {!settings.hasCompletedOnboarding && (
-          <OnboardingModal
-            settings={settings}
-            onComplete={(updated) => handleUpdateSettings(updated)}
-            colors={themeColors}
-          />
-        )}
+        <MarriagePrayerModal
+          isOpen={showMarriagePrayerModal}
+          onClose={() => {
+            setShowMarriagePrayerModal(false);
+            if (!hasSeenBatteryPrompt()) {
+              setShowBatteryModal(true);
+            }
+          }}
+          colors={themeColors}
+        />
+
+        <BatteryOptimizationModal
+          isOpen={showBatteryModal}
+          onClose={() => {
+            setShowBatteryModal(false);
+            markBatteryPromptSeen();
+          }}
+          colors={themeColors}
+        />
       </div>
     </div>
   );

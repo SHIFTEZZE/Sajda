@@ -170,17 +170,17 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                   </div>
                   <div>
                     <div className="font-sans font-bold text-sm text-[#1F3D2B]">
-                      الأخضر الفيكتوري
+                      الأخضر
                     </div>
                     <div className="text-[11px] text-neutral-500 font-sans">
-                      أخضر ملكي عميق، نحاس عتيق وورق بردي دافئ
+                      أخضر هادئ وذهبي دافئ
                     </div>
                   </div>
                 </div>
                 {theme === 'victorian_green' && <Check size={18} style={{ color: '#1F3D2B' }} />}
               </button>
 
-              {/* خيار العنابي */}
+              {/* خيار الأحمر */}
               <button
                 type="button"
                 onClick={() => setTheme('burgundy')}
@@ -196,10 +196,10 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                   </div>
                   <div>
                     <div className="font-sans font-bold text-sm text-[#6B1E2E]">
-                      العَنَّابِي المخملي
+                      الأحمر
                     </div>
                     <div className="text-[11px] text-neutral-500 font-sans">
-                      عنابي أندلسي فاخر، ذهب أثري وعاج دافئ
+                      أحمر عتيق وذهب دافئ
                     </div>
                   </div>
                 </div>

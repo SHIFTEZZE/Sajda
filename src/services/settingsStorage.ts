@@ -47,8 +47,8 @@ const SETTINGS_KEY = 'rawdah_user_settings_v1';
 
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'victorian_green',
-  isDarkMode: true, // Default theme is dark as requested
-  hasCompletedOnboarding: true, // Remove first time message / onboarding modal completely
+  isDarkMode: true,
+  hasCompletedOnboarding: true,
   location: {
     cityName: DEFAULT_CITY.name,
     arabicName: DEFAULT_CITY.arabicName,
@@ -114,4 +114,48 @@ export function saveSettings(settings: AppSettings): void {
   } catch (e) {
     console.error('Failed to save settings:', e);
   }
+}
+
+const BATTERY_PROMPT_KEY = 'sajda_has_seen_battery_prompt_v1';
+
+export function hasSeenBatteryPrompt(): boolean {
+  try {
+    return localStorage.getItem(BATTERY_PROMPT_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export function markBatteryPromptSeen(): void {
+  try {
+    localStorage.setItem(BATTERY_PROMPT_KEY, 'true');
+  } catch (e) {
+    console.error('Failed to mark battery prompt seen:', e);
+  }
+}
+
+export function resetAllAppData(): void {
+  const keys = [
+    SETTINGS_KEY,
+    BATTERY_PROMPT_KEY,
+    'rawdah_tracker_records_v1',
+    'rawdah_quran_bookmarks_v1',
+    'rawdah_reading_progress_v1',
+    'rawdah_hadith_favorites_v1',
+    'sajda_partners_v2',
+    'sajda_trusted_partners_secure_v1',
+    'sajda_device_identity_v1',
+    'sajda_device_key_pair_v1',
+    'sajda_public_identity_v1',
+    'sajda_shared_prayer_history_v1',
+    'sajda_offline_retry_queue_v1',
+    'sajda_processed_events_v1',
+  ];
+  keys.forEach((k) => {
+    try {
+      localStorage.removeItem(k);
+    } catch {
+      // ignore
+    }
+  });
 }
