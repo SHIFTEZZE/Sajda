@@ -23,6 +23,7 @@ import type { PrayerRecord } from './trackerLogic.ts';
 import {
   computeStatsForRecords,
   createRecordId,
+  formatDateKey,
 } from './trackerLogic.ts';
 
 test('Morocco Calculation Parameters follow Ministry of Habous specification', () => {
@@ -113,3 +114,17 @@ test('Prayer tracker statistics strictly ignores unrecorded prayers', () => {
   assert.equal(stats.onTimePercentage, 33, '33% on-time among recorded');
   assert.equal(stats.completionPercentage, 67, '67% completed among recorded');
 });
+
+test('Daily prayer alert key differs across consecutive days to prevent duplicate suppression', () => {
+  const day1 = new Date(2026, 9, 17, 5, 30, 0);
+  const day2 = new Date(2026, 9, 18, 5, 30, 0);
+  const prayerName = 'Fajr';
+
+  const alertKeyDay1 = `${formatDateKey(day1)}:${prayerName}`;
+  const alertKeyDay2 = `${formatDateKey(day2)}:${prayerName}`;
+
+  assert.equal(alertKeyDay1, '2026-10-17:Fajr');
+  assert.equal(alertKeyDay2, '2026-10-18:Fajr');
+  assert.notEqual(alertKeyDay1, alertKeyDay2, 'Alert key must be date-specific so identical prayers trigger on subsequent days');
+});
+

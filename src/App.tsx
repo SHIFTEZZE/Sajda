@@ -104,8 +104,9 @@ export default function App() {
     const nowMs = currentTime.getTime();
     for (const pt of prayerTimes.list) {
       const diffMs = Math.abs(nowMs - pt.time.getTime());
-      if (diffMs < 45000 && lastAlertedPrayer !== pt.name) {
-        setLastAlertedPrayer(pt.name);
+      const alertKey = `${formatDateKey(pt.time)}:${pt.name}`;
+      if (diffMs < 45000 && lastAlertedPrayer !== alertKey) {
+        setLastAlertedPrayer(alertKey);
         const mode = settings.notifications[pt.name as DailyPrayerName];
         if (mode === 'full_adhan') {
           audioAdhan.playAdhanPreview();
