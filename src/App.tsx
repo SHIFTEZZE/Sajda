@@ -16,7 +16,6 @@ import { HadithView } from './components/HadithView.tsx';
 import { FamilyTab } from './components/FamilyTab.tsx';
 import { MarriagePrayerModal } from './components/MarriagePrayerModal.tsx';
 import { BatteryOptimizationModal } from './components/BatteryOptimizationModal.tsx';
-import { wakeLockService } from './services/wakeLockService.ts';
 
 import {
   AppSettings,
@@ -40,11 +39,6 @@ export default function App() {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [showMarriagePrayerModal, setShowMarriagePrayerModal] = useState<boolean>(true);
   const [showBatteryModal, setShowBatteryModal] = useState<boolean>(false);
-
-  // Initialize WakeLock and audio session keepalive so Adhan runs reliably
-  useEffect(() => {
-    wakeLockService.requestWakeLock();
-  }, []);
 
   const [activeTab, setActiveTab] = useState<TabId>('home');
   const [records, setRecords] = useState<RecordsMap>(() => loadAllPrayerRecords());
